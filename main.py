@@ -14,39 +14,66 @@ def main():
         return
 
 
+
+
+
+    #tracker initiliaztion
+    tracker = None
+    bbox2 = None
+    
+
     while True:
         ret, frame = camobj.read()
         if not ret:
             break
         
-        small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
 
 
 
-        #gray scale
-        gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
-        gray = cv2.equalizeHist(gray)
 
-        #Face detection
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize = (60,60))
+        if tracker is None:
+            #grayscale
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.equalizeHist(gray)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize = (60,60))
+            if len(faces) > 0:
+                (x, y, w, h) = faces[0]
+                tracker = cv2.TrackerCSRT_create()
+                tracker.init(frame, (x, y, w, h))
+                bbox2 = (x, y, w, h)
+                
+        else:
+            success, bbox = tracker.update(frame)
+            if success:
+                (x,y,w,h) = map(int, bbox)
+                bbox2 = (x, y, w, h)
+            else:
+                tracker = None
+            
+            if bbox2 is not None:
+                (x, y, w, h) = bbox2
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (100, 100, 100), 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         
-
-        for (x, y, w, h) in faces:
-            x = int(x)
-            y = int(y)
-            w = int(w)
-            h = int(h)
-
-
-            #Rectangle drawing
-            cv2.rectangle(frame, (2*x, 2*y), (2*(x + w), 2*(y + h)), (150, 150, 150), 2)
-
         
         
 
-        output = cv2.resize(frame, (1200, 900))
+        output = cv2.resize(frame, (1000, 800))
+
 
         # Display the resulting frame
         cv2.imshow("blah", output)
